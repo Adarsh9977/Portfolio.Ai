@@ -22,8 +22,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { generatePortfolio } from "@/actions/generate-portfolio"
 import { toast } from "sonner"
+import { generatePortfolio } from "@/actions/generate-portfolio"
 
 // Animation variants
 const containerVariants = {
@@ -302,7 +302,7 @@ const handleGeneratePortfolio = async () => {
     if(res.success) {
       setLoading(false)
       toast.success("Portfolio Generated Successfully")
-      localStorage.setItem("portfolioHTML", res.portfolio); // Store in localStorage
+      localStorage.setItem("portfolioHTML", res.portfolio?.toString() || ""); // Store in localStorage with null check
       router.push("/customize"); // Navigate to portfolio page
     }
     else{

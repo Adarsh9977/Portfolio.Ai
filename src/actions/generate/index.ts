@@ -1,5 +1,7 @@
-
+'use server'
 // import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma';
+import { Project } from '@/lib/types';
 import { GoogleGenerativeAI } from '@google/generative-ai'
 // import { getServerSession } from 'next-auth';
 
@@ -10,41 +12,79 @@ const ai = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const generateHTMLHandler = async(resumeText: string, projects : Project[], session: any) => {
+  if (!session?.user?.email) {
+    return null;
+  }
 
-
-// Function to generate a portfolio using AI
-export async function generateHTML(resumeText: string) {
-  // const session = await getServerSession();
-
-  // console.log("SESION", session);
-
-
-  // if(!session?.user?.email){
-  //   return null;
-  // }
-
-  console.log("GEMINI_API_KEY", process.env.GEMINI_API_KEY);
   try {
     // AI Prompt - Generate Full HTML Portfolio
-    const prompt = `You are an expert front-end developer specializing in creating pixel-perfect, responsive websites with Tailwind CSS. make sure not to include any other text or description about generation just provide html and tailwind code Create a professional portfolio website based on the following resume:
+    const prompt = ` You are an expert front-end developer specializing in creating pixel-perfect, responsive websites with Tailwind CSS. make sure not to include any other text or description about generation just provide html and tailwind code Create a professional portfolio website from this resume
 
-    """${resumeText}"""
-    
-    CRITICAL REQUIREMENTS:
-    - ALWAYS ensure text has sufficient contrast against its background (NEVER use white/light text on light backgrounds or dark text on dark backgrounds)
-    - ALWAYS include viewport meta tag for responsiveness
-    - ALWAYS use a mobile-first approach with responsive classes
-    - ALWAYS include proper HTML5 semantic elements (header, nav, main, section, footer)
-    - ALWAYS include proper aria-labels for accessibility
-    
-    COLOR SYSTEM:
-    - Use a simple black and white color scheme
-    - Text: #000000 (black) on light backgrounds, #FFFFFF (white) on dark backgrounds
-    - Backgrounds: #FFFFFF (white) for light sections, #000000 (black) for dark sections
-    - Accents: Use grayscale colors (#F3F4F6, #E5E7EB, #D1D5DB, #9CA3AF, #6B7280, #4B5563, #374151)
-    - NO colored elements (no blues, indigos, violets, etc.)
-    
-    LAYOUT STRUCTURE:
+✅ Generate only HTML and Tailwind CSS. No explanation or extra text.
+✅ Build a professional portfolio website from this resume:
+
+txt
+Copy
+Edit
+${resumeText}
+📌 For projects, check if the project name and description exist in this list:
+
+js
+Copy
+Edit
+${projects.map(project => project.name).join(', ')}
+If not found, extract from the resume.
+
+Use this project list for details:
+
+js
+Copy
+Edit
+${JSON.stringify(projects)}
+⚠️ Must follow these rules strictly:
+
+Sufficient text contrast (no white on light or dark on dark)
+
+Mobile-first responsive with viewport meta tag
+
+Use semantic HTML5 tags: <header>, <nav>, <main>, <section>, <footer>
+
+Use aria-labels for accessibility
+
+Color Scheme:
+
+Text: #000000 or #FFFFFF
+
+Background: #FFFFFF or #000000
+
+Accents: grayscale only (#F3F4F6 → #374151)
+
+💡 Sections to include:
+
+Navbar (fixed top)
+
+Hero (100vh)
+
+About
+
+Experience
+
+Education & Skills
+
+Projects (bento-style grid)
+
+Contact form
+
+and only return the HTML code. in thre string format.
+
+📄 HTML Template Starter (Use this structure):
+
+html
+Copy
+Edit
+  LAYOUT STRUCTURE:
     1. NAVBAR (height: 4rem) fixed at top:
         <header class="fixed w-full bg-white/80 dark:bg-black/90 backdrop-blur-md z-50 shadow-sm">
           <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -371,59 +411,33 @@ export async function generateHTML(resumeText: string) {
         </div>
       </div>
     </footer>
-    `
+`
 
     console.log('Calling Gemini API...');
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text(); // Extract AI-generated HTML
-    console.log("RESPONSED text", text);
+    const text = response.text().trim(); // Extract AI-generated HTML
 
 
-    // const existinguser = await prisma.user.findUnique({
-    //   where:{
-    //     email: session?.user?.email
-    //   }
-    // })
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: session.user.id
+      },
+      data: {
+        htmlFiles: text.toString()
+      }
+    })
 
-    // if(!existinguser){
-    //   return { message: "User not found"};
-    // }
-
-    // const html = await prisma.htmlFile.create({
-    //   data: {
-    //     file: text,
-    //     user: { connect: { id: existinguser?.id } }
-    //   }
-    // })
+    console.log("UPDATED USER",updatedUser)
 
     return text;
 
   } catch (error) {
     console.error("Error generating portfolio:", error);
-    throw new Error("Failed to generate portfolio.");
+    throw new Error(error instanceof Error ? error.message : 'An error occurred while generating portfolio');
   }
 }
 
-// API Route to generate portfolio
-// app.post("/generate-portfolio", async (req, res) => {
-//   try {
-//     const { resumeText } = req.body;
 
-//     if (!resumeText) {
-//       return res.status(400).json({ error: "Resume text is required." });
-//     }
-
-//     console.log("Generating portfolio for received resume text...");
-
-//     const portfolioHTML = await generatePortfolio(resumeText);
-
-//     res.json({
-//       success: true,
-//       portfolio: portfolioHTML,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ error: "Failed to generate portfolio." });
-//   }
-// });
+export const generateHTML = generateHTMLHandler;

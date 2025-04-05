@@ -1,45 +1,43 @@
-import CredentialsProvider from 'next-auth/providers/credentials';
-import prisma from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import GitHubProvider from 'next-auth/providers/github';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import prisma from '@/lib/prisma';
+import { NextAuthOptions } from 'next-auth';
 
-export const authOptions = {
-    providers: [
-      CredentialsProvider({
-          name: 'Email',
-          credentials: {
-            username: { label: 'email', type: 'email', placeholder: 'jsmith@gmail.com' },
-            password: { label: 'password', type: 'password', placeholder: '123456' },
-          },
-  
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          async authorize(credentials: any) {
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  }
+}
 
-                const existingUser = await prisma.user.findUnique({
-                    where: {
-                        email: credentials.email,
-                    }
-                })
-
-                if(!existingUser){
-                    return null;
-                }
-
-                const isPasswordValid = await bcrypt.compare(credentials.password, existingUser.password)
-
-                if(!isPasswordValid){
-                    return null;
-                }
-
-                return {
-                    id: existingUser.id,
-                    name: existingUser.name,
-                    email: existingUser.email,
-                  }
-          },
-        })
-    ],
-    secret: process.env.NEXTAUTH_SECRET,
-    pages: {
-      signIn: '/signin',
-    }
-  };
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      authorization: { params: { scope: 'read:user user:email repo' } }, // Include email scope
+    }),
+  ],
+  callbacks: {
+    async session({ session, token, user }) {
+      if (session.user) {
+        session.user.id = token?.sub || user?.id;
+        session.user.email = session.user.email || user?.email;
+      }
+      return session;
+    },
+  },
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60,
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: '/signin',
+  },
+};
