@@ -45,7 +45,7 @@ export function Navbar({ session }: { session: Session | null }) {
                 <Image src="/portfol copy.png" alt="navImage" width={200} height={200} />
               </div>
             </motion.div>
-            <span className="hidden font-bold sm:inline-block text-lg">Portfol.io</span>
+            <span className="hidden font-bold sm:inline-block text-lg">Portfolio.AI</span>
           </Link>
 
           <nav className="hidden md:flex md:gap-6">
