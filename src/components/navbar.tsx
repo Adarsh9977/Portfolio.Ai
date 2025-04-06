@@ -137,7 +137,7 @@ export function Navbar({ session }: { session: Session | null }) {
                     <Link href="/signin" onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="outline" className="w-full">Log in</Button>
                     </Link>
-                    <Link href="/signin" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href='/signin' onClick={() => setMobileMenuOpen(false)}>
                       <Button className="w-full bg-gradient-to-tr from-violet-500 to-indigo-600 text-white">
                         Sign up free
                       </Button>
