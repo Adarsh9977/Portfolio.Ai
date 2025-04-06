@@ -50,7 +50,7 @@ const socialLinks = [
   { href: "https://facebook.com", icon: Facebook, label: "Facebook" },
   { href: "https://instagram.com", icon: Instagram, label: "Instagram" },
   { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
-  { href: "https://github.com", icon: Github, label: "GitHub" },
+  { href: "https://github.com/Adarsh9977/Portfolio.Ai", icon: Github, label: "GitHub" },
 ]
 
 export function Footer() {

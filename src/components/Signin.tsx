@@ -11,7 +11,7 @@ const SignIn = () => {
     try {
       await signIn('github', {
         redirect: true,
-        callbackUrl: `http://localhost:3000/generate-portfolio`,
+        callbackUrl: `http://localhost:3000/dashboard`,
       });
       toast.success('Successfully signed in with GitHub!')
     } catch (error) {
