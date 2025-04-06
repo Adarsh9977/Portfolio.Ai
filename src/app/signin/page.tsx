@@ -7,7 +7,7 @@ import React from 'react';
 const SigninPage = async () => {
   const session = await getServerSession(authOptions);
   if (session?.user) {
-    redirect('/');
+    redirect('/dashboard');
   }
   return(<div className="flex items-center justify-center h-screen w-screen">
     <Signin />
